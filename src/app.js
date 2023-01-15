@@ -80,9 +80,9 @@ app.get("/messages", async (req, res) => {
     const limit = req.query.limit
     const user = req.headers.user
     const mensagens = await db.collection("messages").find({$or: [{from: user}, {to: "Todos"}]}).toArray()
-    if(!limit) return send(mensagens)
+    if(!limit) return res.send(mensagens)
 
-    if (limit > 0 && typeof limit !== "string") {
+    if (limit > 0 && parseInt(limit) !== "NaN") {
         const dados = mensagens.reverse().slice(0, parseInt(limit))
         return res.send(dados)
     } else {
