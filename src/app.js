@@ -109,6 +109,25 @@ app.post("/status", async (req, res) => {
     }
 })
 
+app.delete("/messages/:id", async (req, res) => {
+    try {
+        const user = req.headers.user
+        const id = req.params.id
+
+        const existe = await db.collection("messages").findOne({_id: ObjectId(id)})
+        if(!existe) return res.sendStatus(404)
+
+        const existe2 = await db.collection("messages").findOne({$and: [{from: user}, {_id: ObjectId(id)}]})
+        if(!existe2) return res.sendStatus(401)
+
+        await db.collection("messages").deleteOne({_id: ObjectId(id)})
+        res.send("Ok!")
+    } catch (error) {
+        console.log(error)
+        res.sendStatus(500)
+    }
+})
+
 setInterval(async () => {
     try {
         const userAtivo = await db.collection("participants").find().toArray()
