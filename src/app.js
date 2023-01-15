@@ -80,11 +80,14 @@ app.get("/messages", async (req, res) => {
     const limit = req.query.limit
     const user = req.headers.user
     const mensagens = await db.collection("messages").find({$or: [{from: user}, {to: "Todos"}]}).toArray()
-    if (limit) {
+    if(!limit) return send(mensagens)
+
+    if (limit > 0 && typeof limit !== "string") {
         const dados = mensagens.reverse().slice(0, parseInt(limit))
         return res.send(dados)
+    } else {
+        return res.sendStatus(422)
     }
-    res.send(mensagens)
 })
 
 const PORT = 5000
