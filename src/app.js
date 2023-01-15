@@ -36,8 +36,8 @@ app.post("/participants", async (req, res) => {
         const existe = await db.collection("participants").findOne({ name: name.name })
         if (existe) return res.status(409).send("Usuário já cadastrado!")
 
-        await db.collection("participants").insertOne({ name: name.name, lastStatus: Date.now()})
-        await db.collection('messages').insertOne({from: name.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format("HH:mm:ss")});
+        await db.collection("participants").insertOne({ name: name.name, lastStatus: Date.now() })
+        await db.collection('messages').insertOne({ from: name.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format("HH:mm:ss") });
         res.sendStatus(201)
     } catch (error) {
         console.log(error)
@@ -46,8 +46,8 @@ app.post("/participants", async (req, res) => {
 })
 
 app.get("/participants", async (req, res) => {
-   const dados =  await db.collection("participants").find().toArray()
-   res.send(dados)
+    const dados = await db.collection("participants").find().toArray()
+    res.send(dados)
 })
 
 app.post("/messages", async (req, res) => {
@@ -65,11 +65,11 @@ app.post("/messages", async (req, res) => {
             const erros = validation.error.details.map((err) => err.message)
             return res.status(422).send(erros)
         }
-    
-        const UserValido = await db.collection("participants").findOne({name: name})
-        if(!UserValido) return res.sendStatus(422)
 
-        await db.collection("messages").insertOne({from: name,...dados, time: dayjs().format("HH:mm:ss")})
+        const UserValido = await db.collection("participants").findOne({ name: name })
+        if (!UserValido) return res.sendStatus(422)
+
+        await db.collection("messages").insertOne({ from: name, ...dados, time: dayjs().format("HH:mm:ss") })
         res.sendStatus(201)
     } catch (error) {
         res.sendStatus(500)
@@ -77,7 +77,14 @@ app.post("/messages", async (req, res) => {
 })
 
 app.get("/messages", async (req, res) => {
-
+    const limit = req.query.limit
+    const user = req.headers.user
+    const mensagens = await db.collection("messages").find({ from: user }, { to: "Todos" }).toArray()
+    if (limit) {
+        const dados = mensagens.reverse().slice(0, parseInt(limit))
+        return res.send(dados)
+    }
+    res.send(mensagens)
 })
 
 const PORT = 5000
