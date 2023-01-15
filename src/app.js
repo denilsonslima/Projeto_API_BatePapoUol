@@ -128,6 +128,39 @@ app.delete("/messages/:id", async (req, res) => {
     }
 })
 
+app.put("/messages/:id", async (req, res) =>{
+    try {
+        const dados = req.body
+        const name = req.headers.user
+        const id  = req.params.id
+        const schema = joi.object({
+            to: joi.string().required(),
+            text: joi.string().required(),
+            type: joi.string().valid("message", "private_message").required()
+        });
+
+        const validation = schema.validate(dados, { abortEarly: false })
+        if (validation.error) {
+            const erros = validation.error.details.map((err) => err.message)
+            return res.status(422).send(erros)
+        }
+
+        const UserValido = await db.collection("participants").findOne({ name: name })
+        if (!UserValido) return res.sendStatus(422)
+
+        const existe = await db.collection("messages").findOne({_id: ObjectId(id)})
+        if(!existe) return res.sendStatus(404)
+
+        const existe2 = await db.collection("messages").findOne({$and: [{from: name}, {_id: ObjectId(id)}]})
+        if(!existe2) return res.sendStatus(401)
+
+        await db.collection("messages").updateOne({_id: ObjectId(id)}, {$set: dados})
+        res.sendStatus(200)
+    } catch (error) {
+        res.sendStatus(500)
+    }
+})
+
 setInterval(async () => {
     try {
         const userAtivo = await db.collection("participants").find().toArray()
