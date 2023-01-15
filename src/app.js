@@ -50,6 +50,35 @@ app.get("/participants", async (req, res) => {
    res.send(dados)
 })
 
+app.post("/messages", async (req, res) => {
+    const dados = req.body
+    const name = req.headers.user
+    const schema = joi.object({
+        to: joi.string().required(),
+        text: joi.string().required(),
+        type: joi.string().valid("message", "private_message").required()
+    });
+
+    try {
+        const validation = schema.validate(dados, { abortEarly: false })
+        if (validation.error) {
+            const erros = validation.error.details.map((err) => err.message)
+            return res.status(422).send(erros)
+        }
+    
+        const UserValido = await db.collection("participants").findOne({name: name})
+        if(!UserValido) return res.sendStatus(422)
+
+        await db.collection("messages").insertOne({from: name,...dados, time: dayjs().format("HH:mm:ss")})
+        res.sendStatus(201)
+    } catch (error) {
+        res.sendStatus(500)
+    }
+})
+
+app.get("/messages", async (req, res) => {
+
+})
 
 const PORT = 5000
 app.listen(5000, () => console.log(`Servidor rodando na porta: ${PORT}`))
