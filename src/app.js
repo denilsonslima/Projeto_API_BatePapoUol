@@ -92,7 +92,7 @@ app.get("/messages", async (req, res) => {
 
 app.post("/status", async (req, res) => {
     const user = req.headers.user
-    const existe = db.collection("participants").findOne({ name: user })
+    const existe = await db.collection("participants").findOne({ name: user })
     if (!existe) return res.sendStatus(404)
 
     try {
