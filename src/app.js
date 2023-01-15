@@ -79,14 +79,27 @@ app.post("/messages", async (req, res) => {
 app.get("/messages", async (req, res) => {
     const limit = req.query.limit
     const user = req.headers.user
-    const mensagens = await db.collection("messages").find({$or: [{from: user}, {to: "Todos"}, {to: user}]}).toArray()
-    if(!limit) return res.send(mensagens)
+    const mensagens = await db.collection("messages").find({ $or: [{ from: user }, { to: "Todos" }, { to: user }] }).toArray()
+    if (!limit) return res.send(mensagens)
 
     if (limit > 0 && parseInt(limit) !== "NaN") {
         const dados = mensagens.reverse().slice(0, parseInt(limit))
         return res.send(dados)
     } else {
         return res.sendStatus(422)
+    }
+})
+
+app.post("/status", async (req, res) => {
+    const user = req.headers.user
+    const existe = db.collection("participants").findOne({ name: user })
+    if (!existe) return res.sendStatus(404)
+
+    try {
+        await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}});
+        res.sendStatus(200)
+    } catch (err) {
+        return res.status(500).send(err.message);
     }
 })
 
