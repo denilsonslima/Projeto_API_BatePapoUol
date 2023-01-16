@@ -22,21 +22,21 @@ try {
 
 app.post("/participants", async (req, res) => {
     try {
-        const name = req.body.name.trim()
+        const name = req.body
         const schema = joi.object({
             name: joi.string().required(),
         });
 
-        const validation = schema.validate(req.body, { abortEarly: false })
+        const validation = schema.validate(name, { abortEarly: false })
         if (validation.error) {
             const erros = validation.error.details.map((err) => err.message)
             return res.status(422).send(erros)
         }
-        const existe = await db.collection("participants").findOne({ name: name })
+        const existe = await db.collection("participants").findOne({ name: name.name })
         if (existe) return res.status(409).send("Usuário já cadastrado!")
 
-        await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() })
-        await db.collection('messages').insertOne({ from: name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format("HH:mm:ss") });
+        await db.collection("participants").insertOne({ name: name.name.trim(), lastStatus: Date.now() })
+        await db.collection('messages').insertOne({ from: name.name.trim(), to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format("HH:mm:ss") });
         res.sendStatus(201)
     } catch (error) {
         console.log(error)
